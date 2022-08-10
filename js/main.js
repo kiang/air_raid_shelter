@@ -63,7 +63,7 @@ var clusterSource = new ol.source.Cluster({
   source: vectorSource
 });
 
-var vectorPoints = new ol.layer.Vector({
+var vectorPoints = new ol.layer.AnimatedCluster({
   source: clusterSource,
   style: pointStyle
 });
