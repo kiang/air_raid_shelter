@@ -23,7 +23,7 @@ function pointStyle(feature) {
   if (!style) {
     style = [new ol.style.Style({
       image: new ol.style.Circle({
-        radius: 10,
+        radius: 20,
         stroke: new ol.style.Stroke({
           color: '#fff'
         }),
