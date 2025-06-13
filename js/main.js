@@ -115,13 +115,15 @@ function countyStyle(f) {
   return baseStyle;
 }
 
+var countySource = new ol.source.Vector({
+  url: 'https://kiang.github.io/taiwan_basecode/county/topo/20200820.json',
+  format: new ol.format.TopoJSON({
+    featureProjection: appView.getProjection()
+  })
+});
+
 var county = new ol.layer.Vector({
-  source: new ol.source.Vector({
-    url: 'https://kiang.github.io/taiwan_basecode/county/topo/20200820.json',
-    format: new ol.format.TopoJSON({
-      featureProjection: appView.getProjection()
-    })
-  }),
+  source: countySource,
   style: countyStyle,
   zIndex: 50
 });
@@ -236,17 +238,58 @@ positionFeature.setStyle(new ol.style.Style({
 }));
 
 var firstPosDone = false;
+var countyLayerReady = false;
+var pendingUserLocation = null;
+
+countySource.on('change', function() {
+  if (countySource.getState() === 'ready') {
+    countyLayerReady = true;
+    if (pendingUserLocation && !firstPosDone) {
+      triggerCountySelection(pendingUserLocation);
+      firstPosDone = true;
+      pendingUserLocation = null;
+    }
+  }
+});
+
+function triggerCountySelection(coordinates) {
+  var features = countySource.getFeatures();
+  for (var i = 0; i < features.length; i++) {
+    var feature = features[i];
+    if (feature.getGeometry().intersectsCoordinate(coordinates)) {
+      var p = feature.getProperties();
+      if (p.COUNTYNAME) {
+        selectedCounty = p.COUNTYNAME;
+        vectorSource.clear();
+        if (!pointsPool[selectedCounty]) {
+          $.getJSON('https://kiang.github.io/npa.gov.tw/json/' + selectedCounty + '.json', function (c) {
+            pointsPool[selectedCounty] = c;
+            vectorSource.addFeatures(pointFormat.readFeatures(pointsPool[selectedCounty]));
+            vectorSource.refresh();
+          });
+        } else {
+          vectorSource.addFeatures(pointFormat.readFeatures(pointsPool[selectedCounty]));
+          vectorSource.refresh();
+        }
+        break;
+      }
+    }
+  }
+}
+
 geolocation.on('change:position', function () {
   var coordinates = geolocation.getPosition();
   positionFeature.setGeometry(coordinates ? new ol.geom.Point(coordinates) : null);
   if (false === firstPosDone) {
-    map.dispatchEvent({
-      type: 'singleclick',
-      coordinate: coordinates,
-      pixel: map.getPixelFromCoordinate(coordinates)
-    });
     appView.setCenter(coordinates);
-    firstPosDone = true;
+    appView.setZoom(18);
+    
+    if (countyLayerReady) {
+      triggerCountySelection(coordinates);
+      firstPosDone = true;
+    } else {
+      pendingUserLocation = coordinates;
+    }
   }
 });
 
