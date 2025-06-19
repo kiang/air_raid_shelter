@@ -1,0 +1,20 @@
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>404 Not Found</h1>
+<ul>
+<li>Code: NoSuchKey</li>
+<li>Message: The specified key does not exist.</li>
+<li>Key: public/font-awesome/4.1.0/fonts/fontawesome-webfont.woff2</li>
+<li>RequestId: DTEWSR0KGJNCK83Y</li>
+<li>HostId: I9DVXE1pncZ0tEUwxtbeKgdB+ZsepSOphmdPvJ2hMNcwRWcv3cIicfBppA3B8YLPtgWJYqpcUsw=</li>
+</ul>
+<h3>An Error Occurred While Attempting to Retrieve a Custom Error Document</h3>
+<ul>
+<li>Code: NoSuchKey</li>
+<li>Message: The specified key does not exist.</li>
+<li>Key: index.html</li>
+</ul>
+<hr/>
+</body>
+</html>
