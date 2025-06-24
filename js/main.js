@@ -19,7 +19,25 @@ var styleCache = {};
 function pointStyle(feature) {
   var color = '#3399CC';
   var size = feature.get('features').length;
-  var style = styleCache[size];
+  
+  // Check if any feature in the cluster has capacity > 500
+  var hasHighCapacity = false;
+  var features = feature.get('features');
+  for (var i = 0; i < features.length; i++) {
+    var capacity = parseFloat(features[i].get('可容納人數')) || 0;
+    if (capacity > 500) {
+      hasHighCapacity = true;
+      break;
+    }
+  }
+  
+  // Use different color for high capacity shelters
+  if (hasHighCapacity) {
+    color = '#FF6B35'; // Orange/red color for highlighting
+  }
+  
+  var cacheKey = size + '_' + (hasHighCapacity ? 'high' : 'normal');
+  var style = styleCache[cacheKey];
   if (!style) {
     style = [new ol.style.Style({
       image: new ol.style.Circle({
@@ -38,7 +56,7 @@ function pointStyle(feature) {
         })
       })
     })];
-    styleCache[size] = style;
+    styleCache[cacheKey] = style;
   }
   return style;
 }
@@ -201,13 +219,55 @@ map.on('singleclick', function (evt) {
 
 var selectCluster = new ol.interaction.SelectCluster({
   // Point radius: to calculate distance between the features
-  pointRadius: 7,
+  pointRadius: 15,
   // circleMaxObjects: 40,
   // spiral: false,
   // autoClose: false,
   animate: true
 });
 map.addInteraction(selectCluster);
+
+// Create larger style for spider markers
+function spiderMarkerStyle(feature) {
+  var originalFeatures = feature.get('features');
+  if (originalFeatures && originalFeatures.length > 0) {
+    var originalFeature = originalFeatures[0];
+    var capacity = parseFloat(originalFeature.get('可容納人數')) || 0;
+    var color = capacity > 500 ? '#FF6B35' : '#3399CC';
+    
+    return new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 12, // Larger radius for spider markers
+        stroke: new ol.style.Stroke({
+          color: '#fff',
+          width: 2
+        }),
+        fill: new ol.style.Fill({
+          color: color
+        })
+      })
+    });
+  }
+  return null;
+}
+
+// Apply custom styling to spider overlay layer
+selectCluster.getLayer().setStyle(function(feature) {
+  // Style for spider markers (individual features)
+  if (feature.get('selectclusterfeature')) {
+    return spiderMarkerStyle(feature);
+  }
+  // Style for connection lines
+  if (feature.get('selectclusterlink')) {
+    return new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: '#333',
+        width: 1
+      })
+    });
+  }
+  return null;
+});
 
 var previousFeature = false;
 var currentFeature = false;
